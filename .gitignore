@@ -1,0 +1,41 @@
+# Project documentation kept local
+srs.md
+codeofconduct.md
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python backend
+**/.venv/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/htmlcov/
+**/coverage.xml
+
+# Backend runtime and local storage
+backend/storage/
+backend/*.log
+
+# JavaScript/TypeScript frontend
+**/node_modules/
+**/.next/
+**/dist/
+**/build/
+**/coverage/
+**/.vite/
+**/.turbo/
+**/.cache/
+*.tsbuildinfo
+
+# IDE and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
