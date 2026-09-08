@@ -13,7 +13,7 @@ from app.core.config import Settings, get_settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
-from app.models import Project
+from app.models import Project, ProjectFile
 
 
 @pytest.fixture
@@ -52,13 +52,19 @@ def make_zip(*files: tuple[str, str]) -> bytes:
 
 
 def test_valid_zip_is_extracted(client) -> None:
-    test_client, _, tmp_path = client
+    test_client, engine, tmp_path = client
     response = test_client.post(
         "/api/projects/upload",
         files={
             "file": (
                 "sample-api.zip",
-                make_zip(("app/main.py", "print('ok')")),
+                make_zip(
+                    ("app/main.py", "from fastapi import FastAPI\n"),
+                    (
+                        "pyproject.toml",
+                        '[project]\nrequires-python = ">=3.11"\n',
+                    ),
+                ),
                 "application/zip",
             )
         },
@@ -67,8 +73,17 @@ def test_valid_zip_is_extracted(client) -> None:
     assert response.status_code == 201
     body = response.json()
     assert body["source_type"] == "upload"
-    assert Path(body["storage_path"], "app", "main.py").read_text() == "print('ok')"
+    assert body["backend_framework"] == "FastAPI"
+    assert body["python_version"] == ">=3.11"
+    assert Path(body["storage_path"], "app", "main.py").read_text() == (
+        "from fastapi import FastAPI\n"
+    )
     assert Path(body["storage_path"]).is_relative_to(tmp_path / "projects")
+    with Session(engine) as session:
+        files = session.query(ProjectFile).all()
+        assert len(files) == 1
+        assert files[0].relative_path == "app/main.py"
+        assert len(files[0].sha256) == 64
 
 
 def test_invalid_file_is_rejected(client) -> None:

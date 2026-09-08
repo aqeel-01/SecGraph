@@ -9,3 +9,7 @@ storage/
 .ruff_cache/
 .coverage
 htmlcov/
+.coverage.*
+.hypothesis/
+*.sqlite
+*.sqlite3

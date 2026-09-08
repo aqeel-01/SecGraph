@@ -20,5 +20,7 @@ class ProjectRead(ProjectCreate):
 
     id: UUID
     storage_path: str
+    python_version: str | None = None
+    backend_framework: str | None = None
     created_at: datetime
     updated_at: datetime

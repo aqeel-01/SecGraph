@@ -16,6 +16,11 @@ from app.services.project_upload import (
     InvalidProjectArchive,
     extract_project_zip,
 )
+from app.services.preprocessing import (
+    persist_preprocessing_result,
+    preprocess_directory,
+)
+from app.services.ast_indexing import index_project
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -65,10 +70,13 @@ async def upload_project(
         storage_path=str(project_directory),
     )
     try:
+        preprocessing_result = preprocess_directory(project_directory)
+        persist_preprocessing_result(project, preprocessing_result, db)
+        index_project(project, db)
         db.add(project)
         db.commit()
         db.refresh(project)
-    except SQLAlchemyError as exc:
+    except (OSError, SQLAlchemyError) as exc:
         db.rollback()
         shutil.rmtree(project_directory, ignore_errors=True)
         raise HTTPException(

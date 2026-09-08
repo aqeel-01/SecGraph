@@ -1,6 +1,6 @@
 # SecGraph Backend
 
-Initial backend foundation for the SecGraph API Security Reviewer.
+Backend foundation for the SecGraph API Security Reviewer.
 
 ## Requirements
 
@@ -31,6 +31,19 @@ uvicorn app.main:app --reload
 The health check is available at `GET http://127.0.0.1:8000/health`.
 Project ZIPs can be uploaded at `POST /api/projects/upload` using the `file`
 multipart field.
+Uploads are preprocessed for Python source files, SHA-256 metadata, declared
+Python versions, FastAPI usage, and API routes. Files in common generated or
+dependency directories are excluded.
+
+The preprocessing pipeline currently:
+
+- Records Python file paths, sizes, languages, and SHA-256 hashes.
+- Detects declared Python versions and FastAPI usage.
+- Indexes imports, classes, functions, parameters, decorators, calls, and
+  assignments using Python's built-in `ast` module.
+- Detects FastAPI app and router routes, including methods, paths, and
+  dependencies.
+- Stores syntax errors separately without stopping other files from indexing.
 
 ## Test
 
@@ -48,4 +61,5 @@ alembic revision --autogenerate -m "describe change"
 alembic upgrade head
 ```
 
-No domain models or migrations are included in this initial foundation.
+The current migration chain includes project/scan storage, preprocessing
+metadata, the Python AST index, and detected API routes.

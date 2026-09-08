@@ -21,6 +21,10 @@ codeofconduct.md
 # Backend runtime and local storage
 backend/storage/
 backend/*.log
+backend/.coverage.*
+backend/.hypothesis/
+backend/*.sqlite
+backend/*.sqlite3
 
 # JavaScript/TypeScript frontend
 **/node_modules/
@@ -31,6 +35,7 @@ backend/*.log
 **/.vite/
 **/.turbo/
 **/.cache/
+**/.parcel-cache/
 *.tsbuildinfo
 
 # IDE and operating-system files

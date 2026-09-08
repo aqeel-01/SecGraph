@@ -1,6 +1,31 @@
 """SQLAlchemy models."""
 
+from app.models.code_index import (
+    APIRoute,
+    CodeAssignment,
+    CodeClass,
+    CodeDecorator,
+    CodeFunction,
+    CodeImport,
+    FunctionCall,
+    FunctionParameter,
+    ParseError,
+)
 from app.models.project import Project
+from app.models.project_file import ProjectFile
 from app.models.scan import Scan
 
-__all__ = ["Project", "Scan"]
+__all__ = [
+    "APIRoute",
+    "CodeAssignment",
+    "CodeClass",
+    "CodeDecorator",
+    "CodeFunction",
+    "CodeImport",
+    "FunctionCall",
+    "FunctionParameter",
+    "ParseError",
+    "Project",
+    "ProjectFile",
+    "Scan",
+]
