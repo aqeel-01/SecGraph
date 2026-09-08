@@ -1,0 +1,1 @@
+"""Deterministic static security rules."""

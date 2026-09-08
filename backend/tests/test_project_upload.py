@@ -13,7 +13,7 @@ from app.core.config import Settings, get_settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
-from app.models import Project, ProjectFile
+from app.models import Project, ProjectFile, SecurityFinding
 
 
 @pytest.fixture
@@ -59,7 +59,14 @@ def test_valid_zip_is_extracted(client) -> None:
             "file": (
                 "sample-api.zip",
                 make_zip(
-                    ("app/main.py", "from fastapi import FastAPI\n"),
+                    (
+                        "app/main.py",
+                        "from fastapi import FastAPI\n"
+                        "app = FastAPI()\n"
+                        "@app.get('/')\n"
+                        "def health():\n"
+                        "    return {'status': 'ok'}\n",
+                    ),
                     (
                         "pyproject.toml",
                         '[project]\nrequires-python = ">=3.11"\n',
@@ -77,6 +84,10 @@ def test_valid_zip_is_extracted(client) -> None:
     assert body["python_version"] == ">=3.11"
     assert Path(body["storage_path"], "app", "main.py").read_text() == (
         "from fastapi import FastAPI\n"
+        "app = FastAPI()\n"
+        "@app.get('/')\n"
+        "def health():\n"
+        "    return {'status': 'ok'}\n"
     )
     assert Path(body["storage_path"]).is_relative_to(tmp_path / "projects")
     with Session(engine) as session:
@@ -84,6 +95,9 @@ def test_valid_zip_is_extracted(client) -> None:
         assert len(files) == 1
         assert files[0].relative_path == "app/main.py"
         assert len(files[0].sha256) == 64
+        finding = session.query(SecurityFinding).one()
+        assert finding.rule_id == "missing-authentication"
+        assert finding.context_package["endpoint"]["path"] == "/"
 
 
 def test_invalid_file_is_rejected(client) -> None:

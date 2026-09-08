@@ -21,6 +21,8 @@ from app.services.preprocessing import (
     preprocess_directory,
 )
 from app.services.ast_indexing import index_project
+from app.services.graph import build_project_graph
+from app.services.security_engine import run_static_analysis
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -73,6 +75,8 @@ async def upload_project(
         preprocessing_result = preprocess_directory(project_directory)
         persist_preprocessing_result(project, preprocessing_result, db)
         index_project(project, db)
+        build_project_graph(project, db)
+        run_static_analysis(project, db)
         db.add(project)
         db.commit()
         db.refresh(project)

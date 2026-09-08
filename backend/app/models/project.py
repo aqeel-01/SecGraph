@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.graph import GraphEdge, GraphNode
     from app.models.project_file import ProjectFile
     from app.models.scan import Scan
 
@@ -32,6 +33,16 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         passive_deletes=True,
     )
     files: Mapped[list["ProjectFile"]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    graph_nodes: Mapped[list["GraphNode"]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    graph_edges: Mapped[list["GraphEdge"]] = relationship(
         back_populates="project",
         cascade="all, delete-orphan",
         passive_deletes=True,

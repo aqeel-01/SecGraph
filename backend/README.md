@@ -43,7 +43,16 @@ The preprocessing pipeline currently:
   assignments using Python's built-in `ast` module.
 - Detects FastAPI app and router routes, including methods, paths, and
   dependencies.
+- Builds a relational code graph with file, module, function, route, and
+  database/authentication call nodes.
+- Stores `CALLS`, `IMPORTS`, and `ROUTES_TO` relationships in PostgreSQL.
 - Stores syntax errors separately without stopping other files from indexing.
+- Runs deterministic static checks for missing authentication, possible IDOR,
+  SQL injection patterns, hardcoded secrets, sensitive data exposure, and
+  missing rate limiting.
+- Persists each finding with a compact JSON context package containing only the
+  affected endpoint, function, relevant source, dependencies, operations, and
+  graph relationships.
 
 ## Test
 
@@ -62,4 +71,7 @@ alembic upgrade head
 ```
 
 The current migration chain includes project/scan storage, preprocessing
-metadata, the Python AST index, and detected API routes.
+metadata, the Python AST index, detected API routes, and the relational code
+graph. Static findings are stored in `security_findings`.
+Finding context is stored in the `context_package` JSON column and is designed
+for future AI analysis without sending the entire repository.
