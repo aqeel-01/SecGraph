@@ -1,9 +1,49 @@
 # SecGraph
 
+## Introduction
+
 SecGraph is an AI-powered API security reviewer for Python backend projects.
-It combines deterministic security rules, AST indexing, a relational code
-graph, incremental scanning, optional AI explanations, and GitHub pull-request
-analysis.
+It helps developers find security weaknesses while they are building and
+reviewing APIs, without requiring them to manually inspect an entire
+repository.
+
+SecGraph combines deterministic static analysis with optional local or cloud AI
+explanations. It understands backend structure through Python AST indexing,
+FastAPI route detection, code relationships, and incremental file hashing. It
+can analyze a ZIP upload, a connected GitHub repository, or changed backend
+code in a pull request.
+
+## Problem statement
+
+API security issues are often discovered too late or spread across too many
+tools:
+
+- Developers must manually inspect routes, authentication dependencies, data
+  access, and input handling.
+- Traditional scanners produce isolated pattern matches without understanding
+  how functions and routes are connected.
+- Full-repository scans are slow and repeatedly analyze unchanged code.
+- AI tools may receive too much source code, increasing cost and privacy risk.
+- Pull-request reviews rarely provide focused security feedback on changed
+  backend code.
+
+The goal of SecGraph is to provide a focused security review workflow that
+connects API routes to the code behind them, highlights likely security
+problems, explains findings using only relevant context, and avoids unnecessary
+reprocessing.
+
+## What SecGraph solves
+
+SecGraph provides one workflow for:
+
+1. Uploading or connecting a Python backend project.
+2. Discovering relevant source files and backend frameworks.
+3. Indexing the project structure and relationships.
+4. Running deterministic security rules.
+5. Reusing unchanged analysis through SHA-256 hashes.
+6. Sending compact, relevant context to Ollama or Groq when AI adds value.
+7. Displaying findings, evidence, impact, and remediation in a dashboard.
+8. Reviewing changed backend code in GitHub pull requests.
 
 ## Features
 
@@ -21,6 +61,37 @@ analysis.
 - GitHub repository import and signed pull-request webhook analysis.
 - Celery and Redis background scan processing.
 - Next.js dashboard for projects, scans, findings, and security summaries.
+
+## Analysis pipeline
+
+```text
+Project ZIP / GitHub repository
+              |
+              v
+Secure storage and preprocessing
+              |
+              v
+Python files, hashes, framework and route detection
+              |
+              v
+AST index and relational code graph
+              |
+              v
+Deterministic security rules
+              |
+              v
+Relevant security context
+              |
+              +── static finding only
+              |
+              +── Ollama or Groq explanation
+              |
+              v
+Persisted finding and dashboard/PR result
+```
+
+For later scans, unchanged files are reused. Added, modified, deleted, and
+dependent files are identified from stored hashes and import relationships.
 
 ## Architecture
 
@@ -47,7 +118,7 @@ For local development:
 
 - Python 3.11+
 - Node.js 20+
-- PostgreSQL  PostgreSQL 16 is recommended
+- PostgreSQL 16 is recommended
 - Redis 6+
 - Ollama, if using local AI
 
