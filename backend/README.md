@@ -20,7 +20,9 @@ Copy-Item .env.example .env
 
 Update `DATABASE_URL` in `.env` for the local PostgreSQL instance.
 Set `STORAGE_DIR` to change where uploaded projects are extracted. Uploads are
-limited by `MAX_UPLOAD_SIZE_BYTES` (50 MiB by default).
+limited by `MAX_UPLOAD_SIZE_BYTES` (50 MiB by default) and decompression limits.
+For non-development deployments, set `ENVIRONMENT=production` and provide one
+or more comma-separated `API_KEYS`; clients must send `X-API-Key`.
 
 ## Run
 
@@ -37,8 +39,20 @@ celery -A app.services.scan_tasks.celery_app worker --loglevel=INFO
 The health check is available at `GET http://127.0.0.1:8000/health`.
 Project ZIPs can be uploaded at `POST /api/projects/upload` using the `file`
 multipart field.
+GitHub repositories can be imported with
+`POST /api/projects/github` using a validated HTTPS GitHub URL and branch/ref.
 Scans are queued with `POST /api/projects/{project_id}/scan` and queried with
 `GET /api/scans/{scan_id}`.
+Configure a GitHub App or webhook delivery to
+`POST /api/webhooks/github`, setting `GITHUB_WEBHOOK_SECRET`. Signed
+`pull_request` events for `opened`, `reopened`, and `synchronize` are queued
+through Celery. The worker fetches the PR head snapshot, analyzes changed
+Python files and impacted dependencies, then posts a concise PR comment using
+`GITHUB_TOKEN`.
+Dashboard APIs include project lists/details, scan history, finding lists and
+details, and project security summaries under `/api/projects` and
+`/api/findings`.
+Finding list endpoints are paginated with `offset` and `limit` (maximum 100).
 Uploads are preprocessed for Python source files, SHA-256 metadata, declared
 Python versions, FastAPI usage, and API routes. Files in common generated or
 dependency directories are excluded.
@@ -110,3 +124,29 @@ provider attempts, selected model, and optional AI confidence are stored in
 AI responses must contain validated JSON with severity, confidence,
 explanation, potential attack, impact, and suggested fix fields. Malformed
 responses are recorded safely and are never treated as validated analysis.
+
+### Switching the AI provider
+
+Edit only `AI_PROVIDER` in `.env`:
+
+```dotenv
+AI_PROVIDER=ollama  # local Ollama
+# AI_PROVIDER=groq  # Groq API
+```
+
+`ollama` uses `OLLAMA_MODEL` and `OLLAMA_COMPLEX_MODEL`. `groq` uses
+`GROQ_MODEL` and requires `GROQ_API_KEY`. Restart the API/Celery worker after
+changing `.env`; no source-code changes are required.
+
+## Docker Compose
+
+From the repository root, start PostgreSQL, Redis, the API, Celery worker, and
+frontend with:
+
+```powershell
+docker compose up --build
+```
+
+The local compose profile intentionally disables API keys and is for
+development only. Configure API keys and secrets before exposing a deployment
+outside a trusted network.

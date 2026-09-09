@@ -5,7 +5,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, UUIDPrimaryKeyMixin
@@ -43,5 +43,10 @@ class Scan(UUIDPrimaryKeyMixin, Base):
         nullable=True,
     )
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    trigger_type: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="manual"
+    )
+    pull_request_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    pull_request_sha: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
     project: Mapped["Project"] = relationship(back_populates="scans")

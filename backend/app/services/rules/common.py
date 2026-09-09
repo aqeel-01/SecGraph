@@ -10,11 +10,12 @@ from app.services.rules.base import RuleContext
 def build_rule_context(
     project: Project,
     file_ids: set[UUID] | frozenset[UUID] | None = None,
+    root_path: Path | None = None,
 ) -> RuleContext:
     """Load source text for the already-indexed project files."""
 
     sources: dict[UUID, str] = {}
-    root = Path(project.storage_path)
+    root = root_path or Path(project.storage_path)
     selected_files = (
         project.files
         if file_ids is None

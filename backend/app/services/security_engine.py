@@ -1,6 +1,7 @@
 """Execution and persistence of deterministic security rules."""
 
 from collections.abc import Iterable
+from pathlib import Path
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -43,11 +44,12 @@ def run_static_analysis(
     db: Session,
     rules: Iterable[SecurityRule] = DEFAULT_RULES,
     file_ids: set[UUID] | frozenset[UUID] | None = None,
+    scan_root: Path | None = None,
 ) -> list[Finding]:
     """Evaluate and persist the current project's static findings."""
 
     selected_file_ids = None if file_ids is None else set(file_ids)
-    context = build_rule_context(project, selected_file_ids)
+    context = build_rule_context(project, selected_file_ids, scan_root)
     findings = evaluate_rules(context, rules)
     context_builder = SecurityContextBuilder(db)
 
@@ -92,7 +94,7 @@ def run_static_analysis(
                 description=finding.description,
                 evidence=finding.evidence,
                 remediation=finding.remediation,
-                context_package=context_builder.build(project, finding),
+        context_package=context_builder.build(project, finding, scan_root),
             )
         )
     return findings

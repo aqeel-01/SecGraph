@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models import Project, Scan, ScanStatus
-from app.schemas import ScanRead
+from app.schemas import ScanRead, ScanSummary
 from app.services.scan_tasks import run_scan
 
 router = APIRouter(prefix="/api", tags=["scans"])
@@ -63,3 +63,27 @@ def get_scan(
             detail="Scan not found.",
         )
     return scan
+
+
+@router.get(
+    "/projects/{project_id}/scans",
+    response_model=list[ScanSummary],
+    summary="Get scan history",
+)
+def get_scan_history(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+) -> list[Scan]:
+    """Return scans for a project, newest completed runs first."""
+
+    if db.get(Project, project_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found.",
+        )
+    return db.query(Scan).filter(
+        Scan.project_id == project_id
+    ).order_by(
+        Scan.completed_at.desc().nullslast(),
+        Scan.started_at.desc().nullslast(),
+    ).all()

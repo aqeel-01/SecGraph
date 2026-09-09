@@ -24,3 +24,6 @@ class ScanRead(ScanCreate):
     started_at: datetime | None = None
     completed_at: datetime | None = None
     error_message: str | None = None
+    trigger_type: str = "manual"
+    pull_request_number: int | None = None
+    pull_request_sha: str | None = None

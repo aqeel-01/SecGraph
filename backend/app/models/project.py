@@ -21,6 +21,8 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     source_type: Mapped[str] = mapped_column(String(50), nullable=False)
     storage_path: Mapped[str] = mapped_column(String(1024), nullable=False)
+    source_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    source_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
     python_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
     backend_framework: Mapped[str | None] = mapped_column(
         String(100),

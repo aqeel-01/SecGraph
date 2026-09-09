@@ -82,14 +82,15 @@ def test_valid_zip_is_extracted(client) -> None:
     assert body["source_type"] == "upload"
     assert body["backend_framework"] == "FastAPI"
     assert body["python_version"] == ">=3.11"
-    assert Path(body["storage_path"], "app", "main.py").read_text() == (
+    project_path = tmp_path / "projects" / body["id"]
+    assert (project_path / "app" / "main.py").read_text() == (
         "from fastapi import FastAPI\n"
         "app = FastAPI()\n"
         "@app.get('/')\n"
         "def health():\n"
         "    return {'status': 'ok'}\n"
     )
-    assert Path(body["storage_path"]).is_relative_to(tmp_path / "projects")
+    assert project_path.is_relative_to(tmp_path / "projects")
     with Session(engine) as session:
         files = session.query(ProjectFile).all()
         assert len(files) == 1
@@ -129,7 +130,7 @@ def test_path_traversal_zip_is_rejected(client) -> None:
 
 
 def test_project_metadata_is_created(client) -> None:
-    test_client, engine, _ = client
+    test_client, engine, tmp_path = client
     response = test_client.post(
         "/api/projects/upload",
         files={
@@ -147,4 +148,5 @@ def test_project_metadata_is_created(client) -> None:
         project = session.get(Project, UUID(project_id))
         assert project is not None
         assert project.name == "created-project"
-        assert project.storage_path == response.json()["storage_path"]
+        assert Path(project.storage_path).is_relative_to(tmp_path / "projects")
+    assert "storage_path" not in response.json()

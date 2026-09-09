@@ -99,6 +99,25 @@ class AIRouter:
             finding.rule_id in complex_rules
             or finding.confidence < self.settings.ai_simple_confidence_threshold
         )
+        provider_mode = self.settings.ai_provider.strip().lower()
+        if provider_mode == "ollama":
+            return RoutingDecision(
+                "complex" if is_complex else "simple",
+                "AI_PROVIDER is configured for local Ollama analysis.",
+                "ollama",
+                (
+                    self.settings.ollama_complex_model
+                    if is_complex
+                    else self.settings.ollama_model
+                ),
+            )
+        if provider_mode == "groq":
+            return RoutingDecision(
+                "complex" if is_complex else "simple",
+                "AI_PROVIDER is configured for Groq analysis.",
+                "groq",
+                self.settings.groq_model,
+            )
         if not is_complex:
             return RoutingDecision(
                 "simple",

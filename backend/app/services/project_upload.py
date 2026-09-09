@@ -7,6 +7,8 @@ import shutil
 import stat
 import zipfile
 
+from app.core.config import Settings
+
 
 class InvalidProjectArchive(ValueError):
     """Raised when an uploaded archive is invalid or unsafe."""
@@ -33,6 +35,7 @@ def _safe_member_path(name: str) -> Path:
 def extract_project_zip(
     archive_data: bytes,
     destination: Path,
+    settings: Settings | None = None,
 ) -> None:
     """Validate and extract a ZIP archive without following unsafe paths."""
 
@@ -43,8 +46,30 @@ def extract_project_zip(
     try:
         with zipfile.ZipFile(BytesIO(archive_data)) as archive:
             members: list[tuple[zipfile.ZipInfo, Path]] = []
-            for info in archive.infolist():
+            max_uncompressed = (
+                settings.max_archive_uncompressed_bytes
+                if settings is not None
+                else 250 * 1024 * 1024
+            )
+            max_member = (
+                settings.max_archive_member_bytes
+                if settings is not None
+                else 25 * 1024 * 1024
+            )
+            max_members = settings.max_archive_members if settings is not None else 10_000
+            archive_members = archive.infolist()
+            if len(archive_members) > max_members:
+                raise InvalidProjectArchive("Archive contains too many files.")
+            total_uncompressed = 0
+            for info in archive_members:
                 relative_path = _safe_member_path(info.filename)
+                if info.file_size < 0 or info.file_size > max_member:
+                    raise InvalidProjectArchive("Archive member exceeds the size limit.")
+                total_uncompressed += info.file_size
+                if total_uncompressed > max_uncompressed:
+                    raise InvalidProjectArchive(
+                        "Archive uncompressed size exceeds the limit."
+                    )
                 mode = (info.external_attr >> 16) & 0xFFFF
                 if stat.S_ISLNK(mode):
                     raise InvalidProjectArchive(

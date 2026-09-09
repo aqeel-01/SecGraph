@@ -98,7 +98,7 @@ def test_complex_finding_prefers_groq_when_configured() -> None:
         AIProviderResponse("ollama", "deepseek-r1:7b", True, "fallback"),
     )
     router = AIRouter(
-        Settings(groq_api_key="configured"),
+        Settings(ai_provider="auto", groq_api_key="configured"),
         ollama_provider=ollama,
         ollama_complex_provider=ollama,
         groq_provider=groq,
@@ -111,6 +111,57 @@ def test_complex_finding_prefers_groq_when_configured() -> None:
 
     assert result.provider == "groq"
     assert groq.calls
+    assert ollama.calls == []
+
+
+def test_explicit_ollama_mode_ignores_groq_configuration() -> None:
+    groq = FakeProvider(
+        "groq",
+        "deepseek-r1:7b",
+        AIProviderResponse("groq", "deepseek-r1:7b", True, "cloud"),
+    )
+    ollama = FakeProvider(
+        "ollama",
+        "deepseek-r1:7b",
+        AIProviderResponse("ollama", "deepseek-r1:7b", True, "local"),
+    )
+    router = AIRouter(
+        Settings(ai_provider="ollama", groq_api_key="configured"),
+        ollama_provider=ollama,
+        ollama_complex_provider=ollama,
+        groq_provider=groq,
+    )
+
+    result = router.analyze(
+        make_finding(rule_id="possible-idor", confidence=0.65),
+        {"relevant_source": "compact"},
+    )
+
+    assert result.provider == "ollama"
+    assert groq.calls == []
+
+
+def test_explicit_groq_mode_uses_groq_for_simple_findings() -> None:
+    groq = FakeProvider(
+        "groq",
+        "deepseek-r1:7b",
+        AIProviderResponse("groq", "deepseek-r1:7b", True, "cloud"),
+    )
+    ollama = FakeProvider(
+        "ollama",
+        "deepseek-r1:5b",
+        AIProviderResponse("ollama", "deepseek-r1:5b", True, "local"),
+    )
+    router = AIRouter(
+        Settings(ai_provider="groq"),
+        ollama_provider=ollama,
+        ollama_complex_provider=ollama,
+        groq_provider=groq,
+    )
+
+    result = router.analyze(make_finding(confidence=0.8), {"source": "compact"})
+
+    assert result.provider == "groq"
     assert ollama.calls == []
 
 
@@ -131,7 +182,7 @@ def test_groq_failure_falls_back_to_ollama() -> None:
         AIProviderResponse("ollama", "deepseek-r1:7b", True, "fallback analysis"),
     )
     router = AIRouter(
-        Settings(groq_api_key="configured"),
+        Settings(ai_provider="auto", groq_api_key="configured"),
         ollama_provider=ollama,
         ollama_complex_provider=ollama,
         groq_provider=groq,

@@ -19,7 +19,8 @@ class ProjectRead(ProjectCreate):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    storage_path: str
+    source_url: str | None = None
+    source_ref: str | None = None
     python_version: str | None = None
     backend_framework: str | None = None
     created_at: datetime

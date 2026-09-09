@@ -33,6 +33,7 @@ def index_project(
     project: Project,
     db: Session,
     file_ids: set[UUID] | frozenset[UUID] | None = None,
+    root_path: Path | None = None,
 ) -> IndexingSummary:
     """Parse every project Python file and persist its AST entities.
 
@@ -41,7 +42,7 @@ def index_project(
     """
 
     db.flush()
-    root = Path(project.storage_path)
+    root = root_path or Path(project.storage_path)
     files_indexed = 0
     parse_errors = 0
 

@@ -46,14 +46,19 @@ class SecurityContextBuilder:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def build(self, project: Project, finding: Finding) -> dict[str, Any]:
+    def build(
+        self,
+        project: Project,
+        finding: Finding,
+        root_path: Path | None = None,
+    ) -> dict[str, Any]:
         """Return a JSON-serializable context package for a finding."""
 
         project_file = self._project_file(project, finding)
         route = self._route(project, finding, project_file)
         function = self._function(project_file, route, finding)
         endpoint = self._endpoint(route)
-        source = self._source(project, project_file, function, finding)
+        source = self._source(project, project_file, function, finding, root_path)
 
         return {
             "finding": {
@@ -72,7 +77,7 @@ class SecurityContextBuilder:
                 source,
             ),
             "relevant_source": _truncate(source),
-            "related_functions": self._related_functions(project, function),
+            "related_functions": self._related_functions(project, function, root_path),
             "authentication_dependencies": (
                 list(route.dependencies) if route is not None else []
             ),
@@ -139,12 +144,13 @@ class SecurityContextBuilder:
         project_file,
         function: CodeFunction | None,
         finding: Finding,
+        root_path: Path | None = None,
     ) -> str:
         if project_file is None:
             return ""
         try:
             source = (
-                Path(project.storage_path) / project_file.relative_path
+                (root_path or Path(project.storage_path)) / project_file.relative_path
             ).read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             return ""
@@ -179,6 +185,7 @@ class SecurityContextBuilder:
         self,
         project: Project,
         function: CodeFunction | None,
+        root_path: Path | None = None,
     ) -> list[dict[str, Any]]:
         if function is None:
             return []
@@ -211,12 +218,20 @@ class SecurityContextBuilder:
                 "name": node.symbol_name,
                 "file": node.source_file,
                 "line": node.line_number,
-                "source": _truncate(self._node_source(project, node), 4_000),
+                "source": _truncate(
+                    self._node_source(project, node, root_path),
+                    4_000,
+                ),
             }
             for node in nodes[:MAX_RELATED_FUNCTIONS]
         ]
 
-    def _node_source(self, project: Project, node: GraphNode) -> str:
+    def _node_source(
+        self,
+        project: Project,
+        node: GraphNode,
+        root_path: Path | None = None,
+    ) -> str:
         project_file = next(
             (
                 project_file
@@ -239,7 +254,7 @@ class SecurityContextBuilder:
             return ""
         try:
             lines = (
-                Path(project.storage_path) / project_file.relative_path
+                (root_path or Path(project.storage_path)) / project_file.relative_path
             ).read_text(encoding="utf-8").splitlines()
         except (OSError, UnicodeDecodeError):
             return ""
