@@ -60,6 +60,25 @@ def test_high_confidence_finding_skips_ai() -> None:
     assert ollama.calls == []
 
 
+def test_high_confidence_finding_can_be_sent_to_ai() -> None:
+    ollama = FakeProvider(
+        "ollama",
+        "deepseek-r1:1.5b",
+        AIProviderResponse("ollama", "deepseek-r1:1.5b", True, "analysis"),
+    )
+    router = AIRouter(
+        Settings(ai_provider="ollama", ai_skip_high_confidence=False),
+        ollama_provider=ollama,
+        ollama_complex_provider=ollama,
+    )
+
+    result = router.analyze(make_finding(confidence=0.95), {"only": "context"})
+
+    assert result.status == "completed"
+    assert result.provider == "ollama"
+    assert ollama.calls == [{"only": "context"}]
+
+
 def test_simple_finding_uses_local_ollama() -> None:
     context = {"relevant_source": "only this source"}
     ollama = FakeProvider(

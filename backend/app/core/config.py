@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     ai_timeout_seconds: float = 30.0
     ai_provider: Literal["auto", "ollama", "groq"] = "auto"
     ai_routing_enabled: bool = True
+    ai_skip_high_confidence: bool = True
     ai_static_confidence_threshold: float = 0.85
     ai_simple_confidence_threshold: float = 0.75
     ai_complex_rule_ids: str = "possible-idor,sensitive-data-exposure"

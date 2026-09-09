@@ -82,7 +82,10 @@ class AIRouter:
                 None,
                 None,
             )
-        if finding.confidence >= self.settings.ai_static_confidence_threshold:
+        if (
+            self.settings.ai_skip_high_confidence
+            and finding.confidence >= self.settings.ai_static_confidence_threshold
+        ):
             return RoutingDecision(
                 "static_only",
                 "Deterministic confidence is high enough to avoid an AI call.",
