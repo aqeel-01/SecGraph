@@ -31,9 +31,22 @@ class RuleContext:
 
     project: Project
     sources: dict[UUID, str]
+    file_ids: frozenset[UUID] | None = None
 
     def source_for(self, project_file_id: UUID) -> str:
         return self.sources.get(project_file_id, "")
+
+    @property
+    def files(self):
+        """Return only files included in this rule evaluation."""
+
+        if self.file_ids is None:
+            return self.project.files
+        return [
+            project_file
+            for project_file in self.project.files
+            if project_file.id in self.file_ids
+        ]
 
 
 class SecurityRule(Protocol):

@@ -1,6 +1,7 @@
 """Scan database model."""
 
 from datetime import datetime
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -11,6 +12,15 @@ from app.db.base import Base, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
     from app.models.project import Project
+
+
+class ScanStatus(StrEnum):
+    """Supported background scan lifecycle states."""
+
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
 
 
 class Scan(UUIDPrimaryKeyMixin, Base):

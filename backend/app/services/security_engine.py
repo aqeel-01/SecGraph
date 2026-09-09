@@ -1,6 +1,7 @@
 """Execution and persistence of deterministic security rules."""
 
 from collections.abc import Iterable
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -41,24 +42,33 @@ def run_static_analysis(
     project,
     db: Session,
     rules: Iterable[SecurityRule] = DEFAULT_RULES,
+    file_ids: set[UUID] | frozenset[UUID] | None = None,
 ) -> list[Finding]:
     """Evaluate and persist the current project's static findings."""
 
-    context = build_rule_context(project)
+    selected_file_ids = None if file_ids is None else set(file_ids)
+    context = build_rule_context(project, selected_file_ids)
     findings = evaluate_rules(context, rules)
     context_builder = SecurityContextBuilder(db)
 
-    db.query(SecurityFinding).filter(
+    findings_query = db.query(SecurityFinding).filter(
         SecurityFinding.project_id == project.id
-    ).delete(synchronize_session=False)
+    )
+    if selected_file_ids is not None:
+        if not selected_file_ids:
+            return []
+        findings_query = findings_query.filter(
+            SecurityFinding.project_file_id.in_(selected_file_ids)
+        )
+    findings_query.delete(synchronize_session=False)
 
     files_by_path = {
         project_file.relative_path: project_file
-        for project_file in project.files
+        for project_file in context.files
     }
     routes_by_key = {
         (project_file.relative_path, endpoint_for(route)): route
-        for project_file in project.files
+        for project_file in context.files
         for route in project_file.routes
     }
     for finding in findings:

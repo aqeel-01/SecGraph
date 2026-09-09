@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -28,7 +29,11 @@ class IndexingSummary:
     parse_errors: int
 
 
-def index_project(project: Project, db: Session) -> IndexingSummary:
+def index_project(
+    project: Project,
+    db: Session,
+    file_ids: set[UUID] | frozenset[UUID] | None = None,
+) -> IndexingSummary:
     """Parse every project Python file and persist its AST entities.
 
     A failure in one file is recorded as a ``ParseError`` and does not stop
@@ -41,6 +46,8 @@ def index_project(project: Project, db: Session) -> IndexingSummary:
     parse_errors = 0
 
     for project_file in project.files:
+        if file_ids is not None and project_file.id not in file_ids:
+            continue
         project_file.imports.clear()
         project_file.classes.clear()
         project_file.functions.clear()

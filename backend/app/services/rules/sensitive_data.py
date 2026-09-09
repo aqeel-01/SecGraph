@@ -19,7 +19,7 @@ class SensitiveDataExposureRule:
 
     def evaluate(self, context: RuleContext) -> list[Finding]:
         findings: list[Finding] = []
-        for project_file in context.project.files:
+        for project_file in context.files:
             for route in project_file.routes:
                 if route.function is None:
                     continue

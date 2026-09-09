@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.ai_analysis import AIAnalysis
     from app.models.project import Project
     from app.models.project_file import ProjectFile
     from app.models.code_index import APIRoute
@@ -49,3 +50,7 @@ class SecurityFinding(UUIDPrimaryKeyMixin, Base):
     project: Mapped["Project"] = relationship()
     project_file: Mapped["ProjectFile | None"] = relationship()
     route: Mapped["APIRoute | None"] = relationship()
+    ai_analyses: Mapped[list["AIAnalysis"]] = relationship(
+        back_populates="finding",
+        cascade="all, delete-orphan",
+    )

@@ -18,7 +18,7 @@ class MissingAuthenticationRule:
 
     def evaluate(self, context: RuleContext) -> list[Finding]:
         findings: list[Finding] = []
-        for project_file in context.project.files:
+        for project_file in context.files:
             for route in project_file.routes:
                 function = route.function
                 decorators = (

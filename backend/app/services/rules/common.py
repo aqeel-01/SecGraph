@@ -7,19 +7,31 @@ from app.models import APIRoute, CodeFunction, Project
 from app.services.rules.base import RuleContext
 
 
-def build_rule_context(project: Project) -> RuleContext:
+def build_rule_context(
+    project: Project,
+    file_ids: set[UUID] | frozenset[UUID] | None = None,
+) -> RuleContext:
     """Load source text for the already-indexed project files."""
 
     sources: dict[UUID, str] = {}
     root = Path(project.storage_path)
-    for project_file in project.files:
+    selected_files = (
+        project.files
+        if file_ids is None
+        else [item for item in project.files if item.id in file_ids]
+    )
+    for project_file in selected_files:
         try:
             sources[project_file.id] = (
                 root / project_file.relative_path
             ).read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             sources[project_file.id] = ""
-    return RuleContext(project=project, sources=sources)
+    return RuleContext(
+        project=project,
+        sources=sources,
+        file_ids=frozenset(file_ids) if file_ids is not None else None,
+    )
 
 
 def endpoint_for(route: APIRoute) -> str:

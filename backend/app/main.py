@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from app.api.projects import router as project_router
 from app.api.routes import router
+from app.api.scans import router as scan_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 
@@ -27,3 +28,4 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 app.include_router(router)
 app.include_router(project_router)
+app.include_router(scan_router)

@@ -6,6 +6,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
 from app.models import Project, Scan
+from app.models.scan import ScanStatus
 from app.schemas import ProjectRead, ScanRead
 
 
@@ -26,7 +27,7 @@ def test_project_and_scan_relationship_and_schema_conversion() -> None:
             source_type="upload",
             storage_path="storage/example",
         )
-        scan = Scan(status="pending", project=project)
+        scan = Scan(status=ScanStatus.PENDING, project=project)
         session.add(project)
         session.commit()
         session.refresh(project)
@@ -38,7 +39,7 @@ def test_project_and_scan_relationship_and_schema_conversion() -> None:
         assert project.created_at is not None
         assert project.updated_at is not None
         assert ProjectRead.model_validate(project).name == "Example API"
-        assert ScanRead.model_validate(scan).status == "pending"
+        assert ScanRead.model_validate(scan).status == "PENDING"
 
         stored_scan = session.scalar(select(Scan).where(Scan.id == scan.id))
         assert stored_scan is not None
@@ -52,7 +53,7 @@ def test_deleting_project_deletes_related_scans() -> None:
             source_type="repository",
             storage_path="storage/delete-me",
         )
-        project.scans.append(Scan(status="pending"))
+        project.scans.append(Scan(status=ScanStatus.PENDING))
         session.add(project)
         session.commit()
         scan_id = project.scans[0].id

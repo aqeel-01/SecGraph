@@ -22,7 +22,7 @@ class PossibleIDORRule:
 
     def evaluate(self, context: RuleContext) -> list[Finding]:
         findings: list[Finding] = []
-        for project_file in context.project.files:
+        for project_file in context.files:
             for route in project_file.routes:
                 if not RESOURCE_PARAMETER.search(route.path):
                     continue

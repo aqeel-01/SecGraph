@@ -26,7 +26,7 @@ class SQLInjectionRule:
 
     def evaluate(self, context: RuleContext) -> list[Finding]:
         findings: list[Finding] = []
-        for project_file in context.project.files:
+        for project_file in context.files:
             source = context.source_for(project_file.id)
             for line_number, line in enumerate(source.splitlines(), start=1):
                 if not SQL_PATTERN.search(line):
